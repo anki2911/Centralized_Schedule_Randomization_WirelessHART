@@ -1,0 +1,33 @@
+#include "contiki.h"
+#include "sys/node-id.h"
+#include "net/rime/rime.h"
+#include "net/rime/unicast.h"
+#include "net/rime/broadcast.h"
+#include "random.h"
+#include "powertrace.h"
+#include "dev/button-sensor.h"
+#include "dev/leds.h"
+#include <stdio.h>
+
+static int i = 0;
+static int base_chan = 11;
+static int tracker = 0;
+static void
+recv_uc(struct unicast_conn *c, const linkaddr_t *from)
+{
+    static int l;
+    printf("unicast message received from %d.%d via channel %d\n",from->u8[0], from->u8[1],base_chan);
+    l = packetbuf_datalen();
+    printf("%s\n",packetbuf_dataptr());
+}
+static const struct unicast_callbacks unicast_callbacks = {recv_uc};
+static struct unicast_conn uc;
+
+typedef struct schedule
+{
+    int from_node;
+    int to_node;
+    int chan;
+    int time_slot;
+}schedule;
+    

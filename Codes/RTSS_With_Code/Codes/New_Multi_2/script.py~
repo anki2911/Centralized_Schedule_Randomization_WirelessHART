@@ -1,0 +1,6 @@
+import sys
+import os
+arr = [4,18,19,22,27,28,40,43,45,48,56,65,67,74,75,85,86,89]
+for i in range(len(arr)):
+    os.system("python Multi_Channel_Random.py G3.txt Flow_set_1_" + str(i+1) + ".txt Sched_1_" + str(i+1) + ".txt R3/Entropy_Random_1_" + str(i+1) + ".txt R3/entropy_out_1_" + str(i+1) + ".txt")
+    

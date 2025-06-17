@@ -1,0 +1,8 @@
+import os
+import sys
+
+w = []
+for i in range(100):
+    os.system("wc -l brute_1_" + str(i+1) + ".txt >> Record")
+    
+      

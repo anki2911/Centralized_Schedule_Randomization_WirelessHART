@@ -1,0 +1,18 @@
+import sys
+
+
+g = open("KL_2.txt","w")
+for i in range(4):
+    str1 = "../Codes/New_Multi_" + str(i+1)
+    for j in range(4):
+        str2 = str1 + "/Divergence_" + str(j+1) + "2.txt"
+        f = open(str2,"r")
+        for lines in f:
+            lines = lines.strip("\n")
+            lines = lines.split()
+            print lines[0]
+            #l = float(f.read())
+            g.write(str(lines[0]))
+            g.write("\n")
+        g.write("%")
+        g.write("\n")

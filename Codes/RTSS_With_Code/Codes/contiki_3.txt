@@ -1,0 +1,49 @@
+etimer_set(&timer,100 * CLOCK_SECOND);
+PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
+static int i = 0;
+static int j = 0;
+static int hp = 0;
+while(1)
+{   
+    etimer_set(&timer,10 * CLOCK_SECOND);
+    powertrace_start(10 * CLOCK_SECOND);
+    
+    
+    if (i < sched_length)
+    {
+        if (S[j][i].time_slot == tracker)
+        {
+            base_chan = 11 + (S[j][i].chan - 1)*3;
+            cc2420_set_channel(base_chan);
+            addr_from.u8[0] = S[j][i].from_node;
+            addr_from.u8[1] = 0;
+            addr_to.u8[0] = S[j][i].to_node;;
+            addr_to.u8[1] = 0;
+            unicast_open(&uc,base_chan, &unicast_callbacks);
+            if (node_id == S[j][i].from_node)
+            {
+                packetbuf_copyfrom("Hello", 5);
+            }
+            unicast_send(&uc, &addr_to);
+            printf("Transmitted %d\n",node_id);
+            i = i + 1;
+        }        
+    }
+    tracker = tracker + 1;
+    printf("Tracker = %d\n",tracker);
+    if (tracker == 1024)
+    {
+        tracker = 0;
+        printf("Completed %d",hp);
+        hp = hp + 1;
+        i = 0;
+    }
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
+
+}
+    
+PROCESS_END();
+
+
+}
+/*---------------------------------------------------------------------------*/

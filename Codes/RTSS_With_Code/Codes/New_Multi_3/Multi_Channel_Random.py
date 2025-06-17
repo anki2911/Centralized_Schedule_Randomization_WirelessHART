@@ -1,0 +1,324 @@
+import sys
+#sys.path.append ('../Channel_2/')
+import library_functions
+import library_multi_channel
+import random
+#from igraph import *
+from tqdm import tqdm
+import math
+import os
+
+def main():
+    #Read Graph instance from file
+    a = sys.argv[1]
+    b = sys.argv[2]
+    c = sys.argv[3]
+    d = sys.argv[4]
+    e = sys.argv[5]
+    Node = []
+    Edge = []
+    #g = Graph(directed=True)
+    #f1 = open("../G3.txt","r")
+    f1 = open(str(a),"r")
+    counter = 0
+    for lines in f1:
+        lines = lines.strip()
+        for words in lines:
+            words = lines.split()
+            #print words
+            #print "Hello"
+        if counter == 0:
+            num_of_chan = int(words[0])
+        elif counter == 1:
+            num_of_nodes = int(words[0])
+            #print num_of_nodes
+            #g.add_vertices(num_of_nodes) 
+            for i in range(num_of_nodes):
+                Node.append(int(i+1))  
+        else:
+            #print words[0]
+            #print words[1]
+            p = (int(words[0]),int(words[1]))
+            Edge.append(p) 
+            #g.add_edges([p])
+        counter += 1
+    #for i in range(len(Edge)):
+    #    print Edge[i]
+    FLOW = []
+    deadline_list = []
+    #f2 = open("../F_6_3.txt","r")
+    f2 = open(str(b),"r")
+    i = 0
+    for l in f2:
+        l = l.strip()
+        for words in l:
+            words = l.split()
+        if words[0][0] == "F":
+            FLOW.append(library_functions.Flow(0,[],0))
+    f2.close()
+    
+    i = -1
+    f3 = open(str(b),"r")
+    #f3 = open("../F_6_3.txt","r")
+    for lines in f3:
+        lines = lines.strip()
+        #print counter
+        if lines[0][0] == "F":
+            fid = lines
+            counter = 0
+            i += 1
+        elif counter == 1:
+            deadline = int(lines)
+            FLOW[i].deadline = deadline
+        else:
+            lines = lines.split(" ")
+            FLOW[i].flow.append((int(lines[0]),int(lines[1])))
+        counter += 1   
+    
+    Conflict_Edge = []
+    for i in range(len(Edge)):
+        Conflict_Edge.append([])
+    for i in range(len(Edge)):
+        for j in range(len(Edge)):
+            if i <> j:
+                a = Edge[i]
+                b = Edge[j]
+                if (a[0] == b[0]) or (a[0] == b[1]) or (a[1] == b[0]) or (a[1] == b[1]):
+                    if Edge[j] not in Conflict_Edge[i]:
+                        Conflict_Edge[i].append(Edge[j])
+                    if Edge[i] not in Conflict_Edge[j]:
+                        Conflict_Edge[j].append(Edge[i])
+    #for i in range(len(Edge)):
+    #    print Conflict_Edge[i]            
+    #Implementation of Slot Shuffler     
+    hyperperiod = library_functions.find_LCM(FLOW)
+    #print hyperperiod
+    Flow_Multi = []
+    library_multi_channel.Preprocess_Flow(FLOW,Flow_Multi)
+    #for i in range(len(Flow_Multi)):
+    #    print Flow_Multi[i][2][2][1]
+    Slots = []
+    F_Seq = []
+    for i in range(hyperperiod):
+        Slots.append([])          
+        F_Seq.append([])
+    #f3 = open("Sched_6_2_3.txt","r")
+    f3 = open(str(c),"r")
+    i = 0
+    for lines in f3:
+        lines = lines.strip()
+        lines = lines.split(" ")
+        if lines[0] == "%":
+            i = i + 1
+        else:
+            if lines[0] <> "-":
+                j = int(lines[2])
+                #index = -1
+                for k in range(len(Flow_Multi[j-1])):
+                    if (Flow_Multi[j-1][k][2][0] == int(lines[0])) and (Flow_Multi[j-1][k][2][1] == int(lines[1])): 
+                        index = int(Flow_Multi[j-1][k][1])
+                F_Seq[i].append(j-1)        
+                Slots[i].append((int(lines[0]),int(lines[1]),int(lines[2]) - 1,index))
+            else:
+                Slots[i].append((-1,-1,"-","-"))
+                F_Seq[i].append(-1)
+    #print Slots
+    #print "                                                       " 
+    #print F_Seq  
+    temp = 0         
+    num_of_exp = 10000
+    num_of_chan = 3
+    #print num_of_exp       
+    #for i in range(hyperperiod):
+    #    print Slots[i]
+    #for i in range(len(F_Seq)):
+    #    print F_Seq[i]
+    Base_Schedule_List = []
+    Base_Flow_List = []
+        
+    #Temp_Sched = library_multi_channel.Copy_Schedule(Slots)
+    #Temp_Flow = library_multi_channel.Copy_Schedule(F_Seq)
+    Base_Schedule_List.append(Slots)
+    Base_Flow_List.append(F_Seq)
+    #print hyperperiod
+    #p = raw_input()
+    Prob = []
+    for i in range(len(Slots)):
+        L = []
+        for k in range(num_of_chan):
+            F = []
+            for j in range(len(FLOW)+1):
+                F.append(0)
+            L.append(F)
+        Prob.append(L)
+    select = 0
+    Ent = 0
+    prev_ent = 0
+    no = 0
+    while no < num_of_exp:
+        Slots = Base_Schedule_List[select] 
+        F_Seq = Base_Flow_List[select]
+        tick = 0
+        print no
+        while tick <= hyperperiod:
+            #print tick
+            for j in range(len(FLOW)):
+                if (tick%FLOW[j].deadline == 0 and tick > 0):
+                    arr_time = tick - FLOW[j].deadline 
+                    comp_time = tick - 1
+                    #print arr_time
+                    #print comp_time
+                    #print j
+                    for k in range(len(FLOW[j].flow)):
+                        #print j
+                        #print k
+                        if ((k == 0) and (len(FLOW[j].flow) > 1)):    
+                            lb = arr_time
+                            #print comp_time
+                            ub = library_multi_channel.get_slot_number(F_Seq,arr_time,comp_time,k+1,j) - 1
+                        elif ((k == (len(FLOW[j].flow)-1)) and (len(FLOW[j].flow) > 1)):
+                            #print "Yes inside"
+                            lb = library_multi_channel.get_slot_number(F_Seq,arr_time,comp_time,k-1,j) + 1
+                            ub = comp_time
+                        elif len(FLOW[j].flow) == 1:
+                            lb = arr_time
+                            ub = comp_time
+                        else:
+                            #print "Curr Flow " + str(j)
+                            lb = library_multi_channel.get_slot_number(F_Seq,arr_time,comp_time,k-1,j) + 1
+                            #print "LB " + str(lb)
+                            #if (j == 1) and tick >= 10:
+                            #    print lb
+                            #print Slots
+                            #print F_Seq
+                            ub = library_multi_channel.get_slot_number(F_Seq,arr_time,comp_time,k+1,j) - 1 
+                        #print ub
+                        #print lb 
+                        #print "LB " + str(lb)
+                        #print "UB " + str(ub)
+                        curr_slot = library_multi_channel.get_slot_number(F_Seq,arr_time,comp_time,k,j)
+                        #print "Flow id " + str(j) + " Curr Slot " + str(curr_slot) 
+                        #print "F_NO " + str(j)
+                        current_posn = library_multi_channel.get_position(Slots,curr_slot,j)
+                        #print "Current channel " + str(current_posn)
+                        L = []
+                        sn1 = curr_slot - 1
+                        while sn1 >= lb:
+                            #print "Slot lower " + str(sn1)
+                            l = library_multi_channel.filter_conflicts(curr_slot,sn1,j,Slots,Conflict_Edge,Edge,FLOW,current_posn,-1)
+                            if len(l) > 0:
+                                for num in range(len(l)):
+                                    L.append((sn1,l[num]))
+                            sn1 -= 1
+                            #print "lower"
+                            #for num_of_cand in range(len(l)):
+                            #    L.append((sn1,l[num_of_cand]))
+                        #print "Outside\n"
+                        sn2 = curr_slot + 1
+                        while sn2 <= ub:
+                            #print "Slot upper " + str(sn1)
+                            l = library_multi_channel.filter_conflicts(curr_slot,sn2,j,Slots,Conflict_Edge,Edge,FLOW,current_posn,1)
+                            if len(l) > 0:
+                                for num in range(len(l)):
+                                    L.append((sn2,l[num]))
+                            sn2 += 1
+                            
+                        #print L
+                        if len(L) > 0:
+                            r = random.randint(0,len(L)-1)
+                            shuffled_slot = L[r][0]
+                            shuffled_channel = L[r][1]
+                            #print shuffled_slot
+                            #print shuffled_channel
+                            Slots[curr_slot][current_posn] = list(Slots[curr_slot][current_posn])
+                            Slots[shuffled_slot][shuffled_channel] = list(Slots[shuffled_slot][shuffled_channel])
+                            temp1 = Slots[curr_slot][current_posn][0]
+                            temp2 = Slots[curr_slot][current_posn][1]
+                            temp3 = Slots[curr_slot][current_posn][2]
+                            temp4 = Slots[curr_slot][current_posn][3]
+                            Slots[curr_slot][current_posn][0] = Slots[shuffled_slot][shuffled_channel][0]
+                            Slots[curr_slot][current_posn][1] = Slots[shuffled_slot][shuffled_channel][1]
+                            Slots[curr_slot][current_posn][2] = Slots[shuffled_slot][shuffled_channel][2]
+                            Slots[curr_slot][current_posn][3] = Slots[shuffled_slot][shuffled_channel][3]
+                            Slots[shuffled_slot][shuffled_channel][0] = temp1
+                            Slots[shuffled_slot][shuffled_channel][1] = temp2
+                            Slots[shuffled_slot][shuffled_channel][2] = temp3
+                            Slots[shuffled_slot][shuffled_channel][3] = temp4
+                            F_Seq[curr_slot] = list(F_Seq[curr_slot])
+                            F_Seq[shuffled_slot] = list(F_Seq[shuffled_slot])
+                            temp5 = F_Seq[curr_slot][current_posn]
+                            F_Seq[curr_slot][current_posn] = F_Seq[shuffled_slot][shuffled_channel]
+                            F_Seq[shuffled_slot][shuffled_channel] = temp5                            
+            tick += 1
+         
+        New_sched = library_multi_channel.Copy_Schedule(Slots)
+        New_Flow =  library_multi_channel.Copy_Schedule(F_Seq)
+        Base_Schedule_List.append(New_sched)
+        Base_Flow_List.append(New_Flow)
+        for s in range(len(Base_Schedule_List[no])):
+            for ch in range(len(Base_Schedule_List[no][s])):
+                #print Base_Schedule_List[num][s][ch]
+                #print int(Base_Flow_List[num][s][ch])
+                if Base_Flow_List[no][s][ch] == -1:
+                    Prob[s][ch][int(len(FLOW))] += 1
+                else:
+                    Prob[s][ch][int(Base_Flow_List[no][s][ch])] += 1
+        
+        prev_ent = Ent
+        Ent = 0
+        no += 1
+        for i in tqdm(range(len(Slots))):
+            for j in range(num_of_chan):
+                for k in range(len(FLOW)+1):
+                    if Prob[i][j][k] > 0:
+                        #Prob[i][j][k] = float(Prob[i][j][k])/(no)
+                        #f.write(str(Prob[i][j][k]))
+                        Ent = Ent - (Prob[i][j][k]*1.0/no) * math.log((Prob[i][j][k]*1.0/no),2)
+        print Ent
+        if (prev_ent > 0):        
+            if (abs((prev_ent - Ent)/prev_ent) < 0.001):
+                temp = no
+                no = num_of_exp
+                prev_ent = Ent   
+        #for n in range(len(Base_Flow_List)):
+        #    if New_Flow not in Base_Flow_List[n]:
+        #        num_of_exp += 100000
+        select += 1
+        
+    #print len(Base_Schedule_List)
+    
+    #print num_of_chan
+    #for num in range(len(Base_Schedule_List)):
+    #    for s in range(len(Base_Schedule_List[num])):
+    #        for ch in range(len(Base_Schedule_List[num][s])):
+    #            #print Base_Schedule_List[num][s][ch]
+    #            #print int(Base_Flow_List[num][s][ch])
+    #            if Base_Flow_List[num][s][ch] == -1:
+    #                Prob[s][ch][int(len(FLOW))] += 1
+    #            else:
+    #                Prob[s][ch][int(Base_Flow_List[num][s][ch])] += 1
+    print "Writing"                
+    f = open(str(d),"w")
+    g = open(str(e),"w")
+    Ent = 0  
+    string = str(e) + "no.txt" 
+    h = open(string,"w")           
+    for i in tqdm(range(len(Slots))):
+        for j in range(num_of_chan):
+            for k in range(len(FLOW)+1):
+                if Prob[i][j][k] > 0:
+                    #Prob[i][j][k] = float(Prob[i][j][k])/(no)
+                    f.write(str(Prob[i][j][k]*1.0/temp))
+                    Ent = Ent - (Prob[i][j][k]*1.0/temp) * math.log((Prob[i][j][k]*1.0)/temp,2)
+                else:
+                    f.write(str(0))
+                f.write("\t")
+            f.write("\n")
+    g.write(str(Ent))
+    print Ent
+    f.close()
+    g.close()
+    print num_of_exp
+    h.write(str(temp))        
+if __name__ == '__main__':
+    main()

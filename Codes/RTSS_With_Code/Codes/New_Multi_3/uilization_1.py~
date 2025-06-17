@@ -1,0 +1,49 @@
+import sys
+
+a = open("A.txt","w")
+b = open("B.txt","w")
+c = open("C.txt","w")
+d = open("D.txt","w")
+U = open("Util.txt","w")
+
+for i in range(4):
+    for j in range(3):
+        s1 = "D" + str(i+1) + str(j+1)
+        for k in range(100):
+            s2 = s1 + "/Sched_1_" + str(k+1) + ".txt"
+            f = open(s2,"r")
+            count = 0
+            for lines in f:
+                lines = lines.strip()
+                lines = lines.split(" ")
+                
+                #print lines
+                if lines[0] == "-":
+                    count += 1
+            u = (3072 - count)*1.0/3072
+            U.write(str(u))
+            U.write("\n")
+            if u < 0.3:
+                a.write(str(i+1))
+                a.write(str(j+1))
+                a.write(" ")
+                a.write(str(k+1))
+                a.write("\n")
+            elif u < 0.6:
+                b.write(str(i+1))
+                b.write(str(j+1))
+                b.write(" ")
+                b.write(str(k+1))
+                b.write("\n")
+            elif u < 0.9:
+                c.write(str(i+1))
+                c.write(str(j+1))
+                c.write(" ")
+                c.write(str(k+1))
+                c.write("\n")
+            else:
+                d.write(str(i+1))
+                d.write(str(j+1))
+                d.write(" ")
+                d.write(str(k+1))
+                d.write("\n")

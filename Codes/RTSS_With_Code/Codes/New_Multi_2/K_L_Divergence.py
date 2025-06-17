@@ -1,0 +1,64 @@
+import sys
+import math
+
+def main():
+    f1 = open(str(sys.argv[1]),"r")
+    f2 = open(str(sys.argv[2]),"r")
+    K = []    
+    
+    for lines in f1:
+        lines = lines.strip()
+        #i = 0
+        for words in lines:
+            words = lines.split("\t")
+        K.append(words)
+    #print K
+    L = []
+    for lines in f2:
+        lines = lines.strip()
+        for words in lines:
+            words = lines.split()
+        L.append(words)
+    #print L
+    f1.close()
+    f2.close() 
+    rel_ent = 0.0
+    sum1 = 0
+    sum2 = 0
+    #print len(K)
+    #print len(K)
+    for i in range(len(K)):
+        p = 0
+        for j in range(len(K[i])):
+            #print K[i][j]
+            #print L[i][j]
+            
+            #p = raw_input()
+            if ((float(K[i][j]) > 0.0) and (float(L[i][j]) > 0.0)):
+                #print "Inside"
+                #sum1 = sum1 + K[i][j]
+                #sum2 = sum2 + L[i][j]
+                #print K[i][j]
+                #print L[i][j]
+                a = (float(K[i][j]) * 1.0)/len(K)
+                b = (float(L[i][j]) * 1.0)/len(L)
+                #print a
+                #print b
+                #print a*math.log(a/b,2)
+                rel_ent = rel_ent + a*math.log(a/b,2)
+                p = p + a*math.log(a/b,2)
+                sum1 = sum1 + a
+                sum2 = sum2 + b
+                #print float(K[i][j]) * math.log(float(K[i][j])/float(L[i][j]),2)
+                # - float(K[i][j]) * math.log(float(L[i][j]),2)
+        print p
+    output = open(str(sys.argv[3]),"a")
+    output.write(str(rel_ent)+ "\n")
+    #print sum1
+    #print sum2
+    
+    print "KL " + str(rel_ent)
+    output.close()
+    
+if __name__ == '__main__':
+    main()

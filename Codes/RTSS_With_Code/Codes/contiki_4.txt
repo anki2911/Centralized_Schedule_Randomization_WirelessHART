@@ -1,0 +1,17 @@
+etimer_set(&timer,100 * CLOCK_SECOND);
+PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
+static int i = 0;
+
+while(1)
+{   
+    etimer_set(&timer,10 * CLOCK_SECOND);
+    powertrace_start(10 * CLOCK_SECOND);
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
+
+}
+    
+PROCESS_END();
+
+
+}
+/*---------------------------------------------------------------------------*/

@@ -1,0 +1,2 @@
+   text	   data	    bss	    dec	    hex	filename
+  25018	    152	   5528	  30698	   77ea	/home/ankita/contiki-3.0/examples/rime/temp/node_3.sky

@@ -1,0 +1,221 @@
+import sys
+import itertools
+import library_functions
+import library_multi_channel
+import math
+import random
+import os
+
+Node = []
+Edge = []
+FLOW = []
+Conflict_Edge = []
+
+string = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+mapping = [(1,2,1),(4,5,2),(-1,-1,-1),(-1,-1,-1),(-1,-1,-1),(5,7,2),(2,3,3),(-1,-1,-1),(4,5,2),(2,3,1),(-1,-1,-1),(3,7,1),(-1,-1,-1),(5,7,2),(3,7,3),(-1,-1,-1)]
+
+num = 0
+
+schedule = {
+		"1" : (1,2,1),
+		"2" : (4,5,2),
+		"3" : (-1,-1,-1),
+		"4" : (-1,-1,-1),
+		"5" : (-1,-1,-1),
+		"6" : (5,7,2),
+		"7" : (2,3,3),
+		"8" : (-1,-1,-1),
+		"9" : (4,5,2),
+		"10" : (2,3,1),
+		"11" : (-1,-1,-1),
+		"12" : (3,7,1),
+		"13" : (-1,-1,-1),
+		"14" : (5,7,2),
+		"15" : (3,7,3),
+		"16" : (-1,-1,-1)
+	}
+
+
+
+def check_deadline(a):
+    hp = library_functions.find_LCM(FLOW)
+    for i in range(hp):
+        for j in range(len(FLOW)):
+            if i > 0 and (i%FLOW[j].deadline == (FLOW[j].deadline-1)):
+                ub = i
+                lb = ub - FLOW[j].deadline + 1
+                count = 0
+                index = lb
+                while index <= ub:
+                    a = mapping[2*index]
+                    b = mapping[2*index+1]
+                    f_no_1 = a[2]
+                    f_no_2 = b[2]
+                    if mapping[2*index][2] == j+1:
+                        if count < len(FLOW[j].flow) and mapping[2*index][0] == FLOW[j].flow[count][0] and mapping[2*index][1] == FLOW[j].flow[count][1]:
+                            #print "Count increased"
+                            count += 1
+                            #print "Yes1"
+                    elif mapping[2*index+1][2] == j+1:
+                        #print mapping[2*index+1]
+                        if count < len(FLOW[j].flow) and mapping[2*index+1][0] == FLOW[j].flow[count][0] and mapping[2*index+1][1] == FLOW[j].flow[count][1]:
+                            #print "Count increased"
+                            count += 1
+                            #print "Yes2"
+                    index += 1
+                if count <> len(FLOW[j].flow):
+                    return 0
+    return 1
+
+def check_transmission(a):
+    f1 = 1
+    for i in range(len(mapping)/2):
+        a = mapping[2*i][0]
+        b = mapping[2*i][1]
+        c = mapping[2*i+1][0]
+        d = mapping[2*i+1][1]
+        
+        if (a == -1 and b == -1) or (c == -1 and d == -1):
+            f1 = f1 and 1
+        else:
+            edge1 = (int(a),int(b))
+            for i in range(len(Edge)):
+                if Edge[i][0] == a and Edge[i][1] == b:
+                    l1 = Conflict_Edge[i]
+            edge2 = (int(c),int(d))
+            for i in range(len(Edge)):
+                if Edge[i][0] == c and Edge[i][1] == d:
+                    l2 = Conflict_Edge[i]   
+            for i in range(len(l1)):
+                if edge2 not in l1:
+                    p1 = 1
+            for i in range(len(l2)):       
+                if edge1 not in l2:
+                    p2 = 1
+            if p1 == 1 and p2 == 1:
+                f1 = f1 and 1
+            else:
+                return 0
+    return 1
+    
+
+def check_validity(a):
+    f1 = check_deadline(a)
+    if f1 == 1:
+        f3 = check_transmission(a)
+        if f3 == 1:
+            return 1
+    return 0
+
+def perm(a, k = 0):
+   if k == len(a):
+      flag = check_validity(a)
+      if flag == 1:
+          valid_schedule.append(a)
+          #print "valid"
+      else:
+          print "invalid"
+   else:
+      num = num + 1
+      for i in xrange(k, len(a)):
+         a[k], a[i] = a[i] ,a[k]
+         perm(a, k+1)
+         a[k], a[i] = a[i], a[k]
+
+
+#print schedule
+
+
+
+counter = 0
+f = open("ex_graph.txt","r")
+for lines in f:
+    lines = lines.strip("\n")
+    lines = lines.split()
+    if counter == 0:
+        num_of_chan = int(lines[0])
+    elif counter == 1:
+        num_of_nodes = int(lines[0])
+        for i in range(num_of_nodes):
+            Node.append(int(i+1))  
+    else:
+        p = (int(lines[0]),int(lines[1]))
+        Edge.append(p) 
+    counter += 1
+
+#print Edge
+
+g = open("ex_flow.txt","r")
+for lines in g:
+    lines = lines.strip("\n")
+    lines = lines.split()
+    if lines[0][0] == "F":
+        FLOW.append(library_functions.Flow(0,[],0))
+
+i = -1
+h = open("ex_flow.txt","r")
+for lines in h:
+    lines = lines.strip()
+    if lines[0][0] == "F":
+        fid = lines
+        counter = 0
+        i += 1
+    elif counter == 1:
+        deadline = int(lines)
+        FLOW[i].deadline = deadline
+    else:
+        lines = lines.split(" ")
+        FLOW[i].flow.append((int(lines[0]),int(lines[1])))
+    counter += 1   
+    
+
+for i in range(len(Edge)):
+    Conflict_Edge.append([])
+for i in range(len(Edge)):
+    for j in range(len(Edge)):
+        if i <> j:
+            a = Edge[i]
+            b = Edge[j]
+            if (a[0] == b[0]) or (a[0] == b[1]) or (a[1] == b[0]) or (a[1] == b[1]):
+                if Edge[j] not in Conflict_Edge[i]:
+                    Conflict_Edge[i].append(Edge[j])
+                if Edge[i] not in Conflict_Edge[j]:
+                    Conflict_Edge[j].append(Edge[i])
+
+
+
+valid_schedule = []
+valid_schedule = perm(string)
+print len(valid_schedule)
+Prob = []
+for i in range(16):
+    L = []
+    for k in range(2):
+       F = []
+       for j in range(len(FLOW)+1):
+           F.append(0)
+       L.append(F)
+    Prob.append(L)
+    
+for i in range(len(valid_schedule)):
+    for j in range(len(valid_schedule[i])):
+        ch_no = j%2
+        s_no = j/2
+        tup = schedule[str(valid_schedule[i][j])]
+        f_no = int(tup[2])
+        if f_no == -1:
+            Prob[s_no][ch_no][len(FLOW)] += 1
+        else:
+            Prob[s_no][ch_no][f_no-1] += 1
+            
+g = open("Brute_Entropy.txt","w")
+
+for i in range(8):
+    for j in range(2):
+        for k in range(len(FLOW)+1):
+            g.write(str(Prob[i][j][k]*1.0/len(valid_schedule)))
+            g.write("\t")
+        g.write("\n")
+
+g.close()
+        

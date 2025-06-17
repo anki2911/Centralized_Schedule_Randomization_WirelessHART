@@ -1,0 +1,32 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+void FisherYates(int *player, int n) { //implementation of Fisher
+     int i, j, tmp; // create local variables to hold values for shuffle
+
+     for (i = n - 1; i > 0; i--) { // for loop to shuffle
+         j = rand() % (i + 1); //randomise j for shuffle with Fisher Yates
+         tmp = player[j];
+         player[j] = player[i];
+         player[i] = tmp;
+     }
+     for(i=0;i<10;i++)
+     {
+        printf("%d\n",player[i]);
+     }
+}
+
+
+
+int main()
+{
+    int player[10];
+    int i;
+    for (i=0;i<10;i++)
+    {
+        player[i] = i;
+    }
+    FisherYates(player,10);
+
+    return 0;
+}
